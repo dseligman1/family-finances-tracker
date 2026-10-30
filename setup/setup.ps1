@@ -37,8 +37,10 @@ if (-not $pin) {
   $pin = & $plain (Read-Host 'PIN' -AsSecureString)
   $pin2 = & $plain (Read-Host 'Same PIN again' -AsSecureString)
   if ($pin -ne $pin2) { Die 'The two PINs did not match. Run the script again.' }
+  if ($pin.Length -lt 6) { Die 'The PIN needs at least 6 characters.' }
 }
-if ($pin.Length -lt 6) { Die 'The PIN needs at least 6 characters.' }
+# A PIN passed in LEDGER_PIN (for a test copy) skips the length check; it still can't be empty.
+if (-not $pin) { Die 'The PIN cannot be empty.' }
 
 Say '3/6  Making the phone-reminder keys'
 function B64U([byte[]]$b){ [Convert]::ToBase64String($b).TrimEnd('=').Replace('+','-').Replace('/','_') }

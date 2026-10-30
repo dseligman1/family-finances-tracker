@@ -39,6 +39,11 @@ Planner (months of cover, what-ifs, coming up, one-offs, house project).
 
 If you change your PIN later, update the `LEDGER_PIN` secret too (repo Settings → Secrets and variables → Actions).
 
+## Guide
+
+The first time the app opens on a device, an 8-step guide walks through it. Replay it any time from
+Settings → **Show me the guide**.
+
 ## Start from a later year
 
 Settings → **Start from a later year** deletes every check-in, one-off and budget year before the year you

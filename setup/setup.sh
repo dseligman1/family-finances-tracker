@@ -6,6 +6,7 @@
 # Run from the code folder:   bash setup/setup.sh
 # Needs: git and the GitHub CLI (gh), logged in. The script checks both and tells you what to do.
 # Optional, to skip the questions:  REPO_NAME=my-finances LEDGER_PIN=123456 bash setup/setup.sh
+# (A PIN given this way skips the 6-character minimum: only for test copies.)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -33,8 +34,10 @@ if [ -z "$PIN" ]; then
   read -r -s -p "PIN: " PIN; echo
   read -r -s -p "Same PIN again: " PIN2; echo
   [ "$PIN" = "$PIN2" ] || die "The two PINs didn't match. Run the script again."
+  [ ${#PIN} -ge 6 ] || die "The PIN needs at least 6 characters."
 fi
-[ ${#PIN} -ge 6 ] || die "The PIN needs at least 6 characters."
+# A PIN passed in LEDGER_PIN (for a test copy) skips the length check; it still can't be empty.
+[ -n "$PIN" ] || die "The PIN can't be empty."
 
 say "3/6  Making the phone-reminder keys"
 TMP=$(mktemp -d); trap 'rm -rf "$TMP"' EXIT

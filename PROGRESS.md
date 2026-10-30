@@ -35,6 +35,9 @@ their phones, and it stays in sync through an encrypted file in its GitHub repo.
   planHistory, checklists, one-offs, past-dated upcoming items and budget years before 1 Jan of `year`.
   If no budget year is left, `year` is added with the latest year's amounts and pay months.
 - Fixed: the Planner crashed when no balances had been logged (projection spec had no `controls`).
+- **Guide** (v1.1): 8 cards over the real app (`TOUR` in `app.js`, `.tour` styles at the end of `style.css`). Each
+  step switches to the page it describes and pulses that page's nav button. Opens once per device on first
+  unlock (`localStorage["<repo>:tour_seen_v1"]`); Settings → Show me the guide replays it. Esc / arrow keys work.
 
 ## Architecture
 

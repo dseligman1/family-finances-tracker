@@ -17,7 +17,7 @@
     file: 'ledger.json', legacyFile: 'data.json',
     api: 'https://api.github.com',
     patKey: ns + 'pat', uiKey: ns + 'ui_v2', previewKey: ns + 'preview_state_v2',
-    demoKey: ns + 'demo', demoStateKey: ns + 'demo_state_v1',
+    demoKey: ns + 'demo', demoStateKey: ns + 'demo_state_v1', tourKey: ns + 'tour_seen_v1',
   };
 
   L.uid = (p='id') => p + Math.random().toString(36).slice(2, 9);

@@ -96,6 +96,7 @@
     $('side-foot').innerHTML = `<div class="seg" role="group" aria-label="Theme">${[['dark','Dark'],['light','Light'],['system','Auto']].map(([v, n]) => `<button class="${UI.theme === v ? 'on' : ''}" data-act="theme" data-v="${v}">${n}</button>`).join('')}</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn sm" data-act="settings">${L.icons.settings.replace('<svg', '<svg width="15" height="15"')}Settings</button>${L.PREVIEW ? '' : `<button class="btn sm" data-act="lock">${L.icons.lock.replace('<svg', '<svg width="15" height="15"')}${L.DEMO ? 'Exit demo' : 'Lock'}</button>`}</div>`;
     $('theme-btn').innerHTML = isDark() ? L.icons.sun : L.icons.moon;
+    if (tourAt >= 0) tourHl(TOUR[tourAt].tab); // keep the guide's highlight through redraws
     // home-screen icon badge (installed app, where supported)
     try { if ('setAppBadge' in navigator){ if (due && out) navigator.setAppBadge(out); else navigator.clearAppBadge(); } } catch(e){}
   }
@@ -318,6 +319,7 @@
       return {
         title: 'Settings', narrow: true,
         body: `
+          <div class="section"><h3>Guide</h3><div class="small muted" style="margin-bottom:8px">A quick 8-step tour of how the app works and what to do each month.</div><button class="btn" data-act="tour">Show me the guide</button></div>
           <div class="section"><h3>Look</h3><div class="seg">${themeSeg}</div></div>
           <div class="section"><h3>Phone notifications</h3>${pushHtml()}</div>
           <div class="section"><h3>Calendar reminder</h3><div class="small muted" style="margin-bottom:8px">Prefer your calendar? Adds a repeating event: 9am on the 1st of each month, with a nudge two days later.</div><button class="btn" data-act="reminder">${L.icons.bell.replace('<svg', '<svg width="16" height="16"')}Add to calendar</button></div>
@@ -373,6 +375,45 @@
     } catch(e){ alert('That file could not be read as ledger data.'); }
   });
 
+  // ---------------- first-run guide ----------------
+  // Eight cards over the real app. Each step opens the page it describes and pulses that page's menu button.
+  // Shown once per device on first unlock; Settings → Show me the guide replays it.
+  const TOUR = [
+    { tab: 'overview', icon: 'overview', title: `Welcome to ${APP}`, body: 'Your household\'s money in one place: what you have, what you plan to spend, and where it\'s heading. This takes about a minute.', tip: 'Five pages: Overview, Accounts, Budget, Trends and Planner. Use the menu or the bar at the bottom.' },
+    { tab: 'overview', icon: 'checkin', title: 'The monthly check-in', body: 'Once a month, type in each account\'s balance. Everything else (change, trends, cover) is worked out from those numbers.', tip: 'Overview → Start check-in. The dot on Overview shows how many accounts are still to update.' },
+    { tab: 'accounts', icon: 'accounts', title: 'Accounts', body: 'Every account you hold, as savings, current, or other assets like a house or car (shown in net worth, not counted as spendable).', tip: 'Tap an account to rename it, see its history or tag it. Tags (ISAs, Joint, Kids…) group accounts your way.' },
+    { tab: 'budget', icon: 'budget', title: 'Budget', body: 'What you expect to come in and go out each month, year by year: income, fixed costs, living costs and extras.', tip: 'Tap an amount to change it. Tap a name to set its type, or the months it\'s paid in (a March bonus, a yearly bill).' },
+    { tab: 'trends', icon: 'trends', title: 'Trends', body: 'How you\'re really doing: balances over time, the change each month, actual against plan, year on year and net worth.', tip: 'Tap the ⤢ button on any chart for a bigger view and the numbers as a table. Tick boxes show or hide each line.' },
+    { tab: 'planner', icon: 'planner', title: 'Planner', body: 'Months of cover shows how long your money would last with no income. Model what-ifs (a new car?), and add costs you know are coming.', tip: 'Log big one-offs here too, so Trends can strip them out of your normal monthly change.' },
+    { tab: 'overview', icon: 'bell', title: 'Reminders and sharing', body: 'Get a phone reminder on the 1st of each month until the check-in is done. Share with your partner and you\'ll both see the same numbers.', tip: 'Settings → Phone notifications (on iPhone, add the app to your Home Screen first). Your partner needs the same token and PIN.' },
+    { tab: 'overview', icon: 'lock', title: 'Private by design', body: 'Your data is encrypted with your PIN before it leaves this device, and saved to your own GitHub repo. Every save is kept as a version.', tip: 'Keep your PIN in a password manager: it can\'t be reset. You can replay this guide from Settings at any time.' },
+  ];
+  let tourAt = -1;
+  const tourHl = tab => document.querySelectorAll('#bottomnav [data-tab], #side-nav [data-tab]').forEach(b => b.classList.toggle('tour-hl', b.dataset.tab === tab));
+  function tourShow(i){
+    tourAt = i; const st = TOUR[i], last = i === TOUR.length - 1;
+    if (UI.tab !== st.tab){ UI.tab = st.tab; L.saveUI(); L.render(); window.scrollTo({ top: 0 }); }
+    tourHl(st.tab);
+    $('tour').innerHTML = `<div class="tour-card" role="dialog" aria-modal="true" aria-labelledby="tour-title">
+      <div class="tour-top"><span class="tour-ic">${L.icons[st.icon]}</span><span class="tour-step">${i + 1} of ${TOUR.length}</span><button class="tour-skip" data-act="tourEnd">${last ? 'Close' : 'Skip'}</button></div>
+      <h2 id="tour-title">${esc(st.title)}</h2><p>${esc(st.body)}</p><div class="tour-tip">${esc(st.tip)}</div>
+      <div class="tour-foot"><div class="tour-dots" aria-hidden="true">${TOUR.map((_, k) => `<i class="${k === i ? 'on' : k < i ? 'done' : ''}"></i>`).join('')}</div>
+        ${i ? '<button class="btn" data-act="tourBack">Back</button>' : ''}<button class="btn primary" data-act="${last ? 'tourEnd' : 'tourNext'}">${last ? 'Get started' : i ? 'Next' : 'Show me'}</button></div></div>`;
+    $('tour').classList.add('on'); document.body.classList.add('touring');
+    const b = $('tour').querySelector('.btn.primary'); if (b) b.focus({ preventScroll: true });
+  }
+  L.tour = () => { if (L.modal.isOpen) L.modal.close(); closeMenu(); tourShow(0); };
+  L.acts.tour = () => L.tour();
+  L.acts.tourNext = () => tourShow(Math.min(tourAt + 1, TOUR.length - 1));
+  L.acts.tourBack = () => tourShow(Math.max(tourAt - 1, 0));
+  L.acts.tourEnd = () => { tourAt = -1; L.safeLS.set(L.CFG.tourKey, '1'); $('tour').classList.remove('on'); document.body.classList.remove('touring'); tourHl(null); $('tour').innerHTML = ''; };
+  document.addEventListener('keydown', ev => {
+    if (tourAt < 0) return;
+    if (ev.key === 'Escape'){ ev.stopImmediatePropagation(); L.acts.tourEnd(); }
+    else if (ev.key === 'ArrowRight' && tourAt < TOUR.length - 1) L.acts.tourNext();
+    else if (ev.key === 'ArrowLeft' && tourAt > 0) L.acts.tourBack();
+  }, true);
+
   // ---------------- gates + boot ----------------
   const show = id => ['gate-connect','gate-pin','gate-demo','gate-msg','app'].forEach(g => $(g).classList.toggle('hidden', g !== id));
   function syncStatus(kind, msg){ const d = $('sync-dot'); if (!d) return; d.className = 'sync-dot ' + kind; $('sync-label').textContent = msg; }
@@ -395,6 +436,7 @@
     show('app'); buildShell(); push.init();
     if (L.LOCAL) syncStatus('preview', (L.DEMO ? 'Demo' : 'Preview') + ' · local only'); else syncStatus('saved', 'Synced');
     L.render();
+    if (!L.safeLS.get(L.CFG.tourKey)) setTimeout(() => { if (tourAt < 0) L.tour(); }, 450);
     if (!L.LOCAL){
       window.addEventListener('focus', () => L.store.pullIfChanged());
       document.addEventListener('visibilitychange', () => { if (!document.hidden) L.store.pullIfChanged(); });

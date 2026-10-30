@@ -59,8 +59,11 @@ with a made-up household that stays in your browser. It's a convenience, not sec
 `js/config.js` holds the app name and the public reminder key. Owner and repo are read from the address
 (`<owner>.github.io/<repo>/`), so nothing else needs editing.
 
-## Local preview
+## Testing changes locally
 
-Run `python3 -m http.server 8765` from the folder *above* this repo, then open
+From this folder run `python3 -m http.server 8765`, open http://localhost:8765/ and log in to the demo
+(`test demo` / `123456`). Nothing touches GitHub. `CLAUDE.md` has the full checklist for making a change.
+
+If you also keep an unencrypted seed at `../data/ledger-preview.js`, run the server from the folder *above* this repo, then open
 `http://localhost:8765/code/index.html?preview`. It reads a private seed file at `../data/ledger-preview.js`
 (never committed), and edits stay in the browser.

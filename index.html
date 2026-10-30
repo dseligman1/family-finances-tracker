@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en-GB" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Family Finances Tracker</title>
+<meta name="description" content="Private family budget and net-worth tracker.">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Finances">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0E0F0B">
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="style.css?v=1.0.0">
+<script>
+  // Local preview only: loads the unencrypted seed from the private data folder (never part of the repo).
+  if (new URLSearchParams(location.search).has('preview')) document.write('<script src="../data/ledger-preview.js"><\/script>');
+</script>
+</head>
+<body>
+
+<!-- connect -->
+<div class="gate hidden" id="gate-connect">
+  <div class="gate-card">
+    <div class="brand">Family <em>Finances</em> Tracker</div>
+    <div class="gate-sub">First time on this device. Paste the GitHub token for this repo (fine-grained, Contents: read &amp; write).</div>
+    <div class="field"><label for="pat-input">GitHub token</label><input class="input" type="password" id="pat-input" placeholder="github_pat_…" autocomplete="off"></div>
+    <button class="btn primary block" id="pat-btn">Connect</button>
+    <div class="gate-error" id="pat-error"></div>
+    <div class="gate-hint">Stored only in this browser. It's only ever sent to GitHub.</div>
+    <div class="gate-hint"><a href="#" data-demo-open>Log in to the demo</a></div>
+  </div>
+</div>
+
+<!-- pin -->
+<div class="gate hidden" id="gate-pin">
+  <div class="gate-card">
+    <div class="brand">Family <em>Finances</em> Tracker</div>
+    <div class="gate-sub">Enter your PIN to unlock.</div>
+    <div class="field"><label for="pin-input">PIN</label><input class="input" type="password" inputmode="numeric" id="pin-input" placeholder="••••••" autocomplete="current-password"></div>
+    <button class="btn primary block" id="pin-btn">Unlock</button>
+    <div class="gate-error" id="pin-error"></div>
+    <div class="hidden" id="first-run">
+      <div class="gate-sub" style="margin-top:14px">This PIN will lock a brand-new, empty ledger. It can't be recovered, so store it in your password manager.</div>
+      <button class="btn block" id="start-empty">Start an empty ledger</button>
+    </div>
+    <div class="gate-hint"><a href="#" data-demo-open>Log in to the demo</a></div>
+  </div>
+</div>
+
+<!-- demo login -->
+<div class="gate hidden" id="gate-demo">
+  <div class="gate-card">
+    <div class="brand">Family <em>Finances</em> Tracker</div>
+    <div class="gate-sub">Demo login. Opens the full app with a made-up household, so you can try everything. Nothing is saved to GitHub.</div>
+    <div class="field"><label for="demo-user">Name</label><input class="input" id="demo-user" autocomplete="off" autocapitalize="none" spellcheck="false"></div>
+    <div class="field"><label for="demo-pin">PIN</label><input class="input" type="password" inputmode="numeric" id="demo-pin" placeholder="••••••" autocomplete="off"></div>
+    <button class="btn primary block" id="demo-btn">Open the demo</button>
+    <div class="gate-error" id="demo-error"></div>
+    <div class="gate-hint"><a href="#" id="demo-back">Back</a></div>
+  </div>
+</div>
+
+<!-- messages -->
+<div class="gate hidden" id="gate-msg"><div class="gate-card"><div class="brand">Family <em>Finances</em> Tracker</div><div class="gate-sub" id="gate-msg-text"></div></div></div>
+
+<!-- app -->
+<div class="hidden" id="app">
+  <aside class="side" id="side" aria-label="Menu">
+    <div class="side-head"><div class="brand">Family <em>Finances</em> Tracker</div><button class="icon-btn side-close" id="side-close" data-act="menu" aria-label="Close menu"></button></div>
+    <nav class="side-nav" id="side-nav" aria-label="Sections"></nav>
+    <div class="side-sec" id="side-actions"></div>
+    <div class="side-foot" id="side-foot"></div>
+  </aside>
+  <div class="side-backdrop" data-act="menu"></div>
+  <div class="shell">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <button class="icon-btn menu-btn" id="menu-btn" data-act="menu" aria-label="Open menu"></button>
+        <div class="brand top-brand">Family <em>Finances</em> Tracker</div>
+        <div class="spacer"></div>
+        <div class="sync" aria-live="polite"><span class="sync-dot" id="sync-dot"></span><span id="sync-label">—</span></div>
+        <button class="icon-btn" id="theme-btn" data-act="toggleTheme" aria-label="Switch between light and dark"></button>
+        <button class="icon-btn" id="settings-btn" data-act="settings" aria-label="Settings"></button>
+      </div>
+      <div class="preview-bar hidden" id="preview-bar"><div class="inner"><strong>Preview</strong><span>Test data, running on this computer. Play freely; edits stay in this browser.</span></div></div>
+    </header>
+    <main id="page"></main>
+    <nav class="bottomnav" id="bottomnav" aria-label="Sections"></nav>
+  </div>
+</div>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="sheet" id="modal-sheet">
+    <div class="sheet-head"><div style="min-width:0"><h2 id="modal-title"></h2><div class="sub" id="modal-sub"></div></div><button class="icon-btn" id="modal-close" data-act="close" aria-label="Close"></button></div>
+    <div class="sheet-body" id="modal-body"></div>
+    <div class="sheet-foot" id="modal-foot"></div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<input type="file" id="import-input" accept="application/json,.json" class="hidden">
+
+<script src="js/config.js?v=1.0.0"></script>
+<script src="js/core.js?v=1.0.0"></script>
+<script src="js/model.js?v=1.0.0"></script>
+<script src="js/demo.js?v=1.0.0"></script>
+<script src="js/charts.js?v=1.0.0"></script>
+<script src="js/app.js?v=1.0.0"></script>
+<script src="js/views.js?v=1.0.0"></script>
+<script>Ledger.boot();</script>
+</body>
+</html>
